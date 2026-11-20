@@ -1,0 +1,350 @@
+@font-face {
+  font-family: "GOT";
+  src: url(../fontes/GOT.ttf);
+}
+
+:root {
+  --dourado: #d4af37;
+  --dourado-claro: #f3d77a;
+  --texto: #f1f1f1;
+  --duracao: 7000ms; /* tempo de cada dragão no modo automático (o JS lê este valor) */
+  --dir: 1;          /* direção da animação: 1 = avançando, -1 = voltando (o JS troca) */
+}
+
+body {
+  font-family: "Times New Roman", Times, serif;
+  background-color: #0d0d0d;
+  color: var(--texto);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px;
+  overflow-x: hidden;
+}
+
+/* ================= IMAGENS DE FUNDO ================= */
+
+.carrossel {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: #000;
+}
+
+/* Todas as imagens ficam empilhadas; só a ativa fica visível */
+.imagem {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  filter: blur(8px) brightness(0.6);
+  transition: opacity 1.2s ease, filter 1.2s ease;
+}
+
+.imagem.ativa {
+  opacity: 1;
+  filter: blur(0) brightness(1);
+  z-index: 1;
+  /* desliza a partir do lado da direção escolhida e faz um zoom lento (efeito Ken Burns) */
+  animation: entrarImagem var(--duracao) cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes entrarImagem {
+  from {
+    transform: scale(1.18) translateX(calc(var(--dir) * 4%));
+  }
+  to {
+    transform: scale(1.02) translateX(0);
+  }
+}
+
+/* Escurece as bordas para o texto ficar legível */
+main::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(120deg, rgba(0, 0, 0, 0.95) 10%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.9) 90%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, transparent 35%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ================= TEXTOS ================= */
+
+.conteudo {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: calc(100vh - 40px);
+  padding: 6vh 0 2vh;
+}
+
+.informacoes {
+  display: none;
+}
+
+.informacoes.ativa {
+  display: block;
+}
+
+.informacoes .numero {
+  display: block;
+  font-family: "GOT";
+  color: var(--dourado);
+  opacity: 0.6;
+  letter-spacing: 6px;
+  margin-bottom: 10px;
+}
+
+.informacoes h1 {
+  font-size: clamp(28px, 4vw, 48px);
+  color: var(--dourado);
+  margin-bottom: 40px;
+  font-family: "GOT";
+  letter-spacing: 5px;
+  text-shadow: 2px 2px 10px #000, 0 0 25px rgba(212, 175, 55, 0.35);
+}
+
+.informacoes .descricao {
+  width: 49%;
+  font-size: 22px;
+  line-height: 38px;
+  max-height: 300px;
+  overflow: auto;
+  padding: 20px;
+  text-align: justify;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.45), transparent);
+  border-left: 3px solid var(--dourado);
+}
+
+/* Animações de entrada do texto (disparam sempre que o bloco recebe .ativa) */
+.informacoes.ativa .numero {
+  animation: surgir 0.6s ease both;
+}
+
+.informacoes.ativa h1 {
+  animation: tituloEntrar 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
+}
+
+.informacoes.ativa .descricao {
+  animation: textoEntrar 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s both;
+}
+
+@keyframes surgir {
+  from { opacity: 0; }
+  to { opacity: 0.6; }
+}
+
+@keyframes tituloEntrar {
+  from {
+    opacity: 0;
+    letter-spacing: 25px;
+    transform: translateX(calc(var(--dir) * 40px));
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    letter-spacing: 5px;
+    transform: translateX(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes textoEntrar {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================= CONTROLES (BOTÕES) ================= */
+
+.controles {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.botoes-carrossel {
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+  gap: 12px;
+  padding: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+/* centraliza sem cortar a primeira miniatura quando a tela é estreita */
+.botoes-carrossel .botao:first-child { margin-left: auto; }
+.botoes-carrossel .botao:last-child { margin-right: auto; }
+
+.botoes-carrossel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Cada botão é uma miniatura do dragão */
+.botao {
+  position: relative;
+  flex-shrink: 0;
+  width: 110px;
+  height: 66px;
+  padding: 0;
+  border: 2px solid rgba(212, 175, 55, 0.35);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #111;
+  cursor: pointer;
+  filter: grayscale(0.85) brightness(0.55);
+  transition: transform 0.35s ease, filter 0.35s ease, border-color 0.35s ease,
+    box-shadow 0.35s ease, width 0.35s ease, height 0.35s ease;
+}
+
+.botao img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.botao span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6px;
+  font-family: "GOT";
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--texto);
+  text-align: center;
+  text-shadow: 0 0 6px #000, 0 0 3px #000;
+}
+
+.botao:hover,
+.botao:focus-visible {
+  filter: grayscale(0) brightness(0.9);
+  border-color: var(--dourado);
+  transform: translateY(-6px);
+  outline: none;
+}
+
+.botao:hover img {
+  transform: scale(1.12);
+}
+
+.botao.selecionado {
+  width: 140px;
+  height: 84px;
+  filter: none;
+  border-color: var(--dourado);
+  box-shadow: 0 0 18px rgba(212, 175, 55, 0.55), 0 8px 20px rgba(0, 0, 0, 0.7);
+  transform: translateY(-6px);
+}
+
+.botao.selecionado span {
+  color: var(--dourado-claro);
+}
+
+/* Barrinha de progresso do modo automático (só aparece no selecionado) */
+.botao .progresso {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 0;
+  background: linear-gradient(90deg, var(--dourado), var(--dourado-claro));
+  box-shadow: 0 0 8px var(--dourado);
+}
+
+.botao.selecionado .progresso {
+  animation: progresso var(--duracao) linear forwards;
+}
+
+.controles.pausado .botao.selecionado .progresso {
+  animation-play-state: paused;
+}
+
+@keyframes progresso {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* Setas anterior / próxima */
+.seta {
+  flex-shrink: 0;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid var(--dourado);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  color: var(--dourado);
+  font-size: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.seta:hover,
+.seta:focus-visible {
+  background: var(--dourado);
+  color: #111;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+  outline: none;
+}
+
+.seta-anterior:hover { transform: translateX(-4px); }
+.seta-proxima:hover { transform: translateX(4px); }
+.seta:active { transform: scale(0.9); }
+
+/* ================= CELULAR / TELAS MENORES ================= */
+
+@media (max-width: 900px) {
+  .informacoes .descricao {
+    width: 100%;
+    font-size: 18px;
+    line-height: 30px;
+  }
+
+  .controles {
+    gap: 8px;
+  }
+
+  .botao {
+    width: 64px;
+    height: 44px;
+  }
+
+  .botao.selecionado {
+    width: 84px;
+    height: 54px;
+  }
+
+  .botao span {
+    display: none;
+  }
+
+  .seta {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+}
+
+/* Respeita quem prefere menos movimento no sistema */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
